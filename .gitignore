@@ -1,0 +1,6 @@
+/imagefiles/
+/lib/*.o
+/*.o
+/*.img
+/fat32extractor
+
