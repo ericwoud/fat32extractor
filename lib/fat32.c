@@ -33,6 +33,7 @@
 #define tolower(c)  ((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))
 
 static uint32_t * const fat32_buffer = (uint32_t *)FAT32BUFFER;
+static uint32_t const fat32_buffer_size = (uint32_t)FAT32BUFFER_SIZE;
 
 static int strcasecmp(const char *s1, const char *s2) {
   const unsigned char *us1 = (const unsigned char *)s1;
@@ -58,6 +59,7 @@ static int strcasecmp(const char *s1, const char *s2) {
 #define VERBOSE printf
 
 static uint32_t *fat32_buffer = NULL;
+static uint32_t fat32_buffer_size = 0;
 
 static int io_seek(uintptr_t handle, int mode, signed long long offset) {
   if (mode != IO_SEEK_SET) return -1;
@@ -79,11 +81,13 @@ static void zeromem(void * buffer, size_t length) {
   memset(buffer, 0, length);
 }
 
+/* This is now not needed anymore
 static void strlcpy(char * dst, const char * src, size_t dsize) {
   strncpy(dst, src, dsize);
   dst[dsize] = '\0'; // make sure it is nul terminated
   return;
 }
+*/
 
 #endif
 
@@ -280,18 +284,22 @@ int fat32_init(const int handle) {
              fat32_bs.BPB_FATSz32*fat32_bs.BPB_BytesPerSec/sizeof(uint32_t));
   }
   if (fat32_bs.BS_Sig != 0xAA55) {
-    ERROR("FAT32: readBS: Boot Sector Signature Mismatch 0x%x != 0xAA55)\n",
+    ERROR("FAT32: readBS: Boot Sector Signature Mismatch 0x%x != 0xAA55\n",
              fat32_bs.BS_Sig);
     return -1;
   }
 #ifdef BUILD4ATF
   zeromem(fat32_buffer, fat32_bs.BPB_FATSz32 * fat32_bs.BPB_BytesPerSec);
+  fat32_buffer_size = FAT32BUFFER_SIZE;
 #else // BUILD4LINUX
   if (fat32_buffer == NULL) {
     fat32_buffer = (uint32_t*)calloc(fat32_bs.BPB_FATSz32 ,
                                      fat32_bs.BPB_BytesPerSec);
+    fat32_buffer_size = fat32_bs.BPB_FATSz32 * fat32_bs.BPB_BytesPerSec;
   }
 #endif
+  INFO("FAT32: Maximum partition size supported %d MiB\n",
+        (fat32_buffer_size*(fat32_bs.BPB_TotSec32/fat32_bs.BPB_FATSz32))>>20);
   return 0;
 }
 
