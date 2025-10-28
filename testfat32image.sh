@@ -1,7 +1,10 @@
 #!/bin/bash
 
+if ! command -v mdir  >/dev/null 2>%1; then echo "Need mdir command"; exit 1; fi
+if ! command -v mcopy >/dev/null 2>%1; then echo "Need mcopy command"; exit 1; fi
+
 dd if=/dev/zero of=./fat32test.img bs=16M count=4
-mkfs.fat -v -F 32 -S 512 -s 4 ./fat32test.img
+mkfs.fat -v -F 32 -S 512 -s 16 ./fat32test.img
 mkdir -p ./imagefiles/longlongtestdir/testdir
 echo "test" > ./imagefiles/testfile
 echo "another test" > ./imagefiles/longlongtestdir/file.txt
