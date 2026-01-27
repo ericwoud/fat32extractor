@@ -18,11 +18,15 @@
 #define FAT32_H
 
 #if defined(IMAGE_AT_EL1) || defined(IMAGE_AT_EL3)
-#define BUILD4ATF // #else BUILD4LINUX
+#define BUILD4ATF
+#define atfstatic static // Don't use the stack
+#else
+#define atfstatic        // Use the stack
 #endif
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct BPB {
   uint8_t  BS_jmpBoot[3];
@@ -89,8 +93,8 @@ typedef union DIR {
 #define ATTR_VOLUME_ID  0x08
 #define ATTR_DIRECTORY  0x10
 #define ATTR_ARCHIVE    0x20
-#define ATTR_LONG_NAME (ATTR_READ_ONLY|ATTR_HIDDEN|ATTR_SYSTEM|ATTR_VOLUME_ID)
-#define ATTR_LONG_NAME_MASK (ATTR_LONG_NAME|ATTR_DIRECTORY|ATTR_ARCHIVE)
+#define ATTR_LONG_NAME      (ATTR_READ_ONLY|ATTR_HIDDEN|ATTR_SYSTEM|ATTR_VOLUME_ID)
+#define ATTR_LONG_NAME_MASK (ATTR_READ_ONLY|ATTR_HIDDEN|ATTR_SYSTEM|ATTR_VOLUME_ID|ATTR_DIRECTORY|ATTR_ARCHIVE)
 
 #define FREE_DIR_ENTRY  0xE5
 #define LAST_DIR_ENTRY  0x00
@@ -98,16 +102,14 @@ typedef union DIR {
 
 #define BAD_CLUSTER 0x0FFFFFF7
 
-#define FAT32_MAX_LONG_NAME_LENGTH 256 // include terminating null
+#define FAT32_MAX_LONG_NAME_LENGTH 255
 #define FAT32_MAX_SECTOR_SIZE 512
 
-int    fat32_open_file(const int handle, char *filename, DIR * entry);
-size_t fat32_read_file(const int handle, const DIR * entry, char *buffer,
-                       size_t size);
-size_t fat32_file_size(const DIR * entry);
-int    fat32_init(const int handle);
-void   fat32_free();
-
+int  fat32_open_file(const int handle, char *filename, DIR * entry);
+int  fat32_read_file(const int handle, const DIR * entry, char *buf, size_t size);
+int  fat32_file_size(const DIR * entry);
+int  fat32_init(const int handle);
+void fat32_free();
 #ifdef BUILD4ATF
 // fat32_list_entries() uses too much stack for ATF
 #else // BUILD4LINUX
